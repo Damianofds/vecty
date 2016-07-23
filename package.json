@@ -1,0 +1,31 @@
+{
+  "name": "vecty",
+  "version": "1.0.0",
+  "description": "a figata",
+  "main": "vecty.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "vecty",
+    "svg",
+    "coolness"
+  ],
+  "author": "fds",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.14.2",
+    "bunyan": "^1.5.1",
+    "cors": "^2.7.1",
+    "express": "^4.13.3",
+    "forever": "^0.15.1",
+    "github": "^2.2.0",
+    "follow-redirects": "0.0.7",
+    "https-proxy-agent": "^1.0.0",
+    "mime": "^1.2.11",
+    "bluebird": "^3.4.1",
+	"mkdirp": "^0.5.1",
+	"unix-timestamp": "^0.2.0",
+	"express-fileupload": "^0.0.5"
+  }
+}
