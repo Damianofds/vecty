@@ -1,12 +1,113 @@
 <html>
-    <body>
-        <form ref='uploadForm' 
-            id='uploadForm' 
-            action='http://localhost:3000/vectymelo' 
-            method='post' 
-            encType="multipart/form-data">
-                <input type="file" name="srcImg" />
-                <input type='submit' value='Upload!' />
-        </form>		
-    </body>
+	<head>
+		<title>Vecty - cool shit here!</title>
+		
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/4.3.0/dropzone.js"></script>
+		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/4.3.0/dropzone.css">
+		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/4.3.0/basic.css">
+		
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.js"></script>
+		
+		<script>
+			Dropzone.options.uploadForm = {
+			  paramName: "srcImg", // The name that will be used to transfer the file
+			  maxFilesize: 10, // MB
+			  accept: function(file, done) {
+				// We accept all the shit
+				done();
+			  }
+			};
+		</script>
+		<style>
+			h1{
+				font-family: Verdana;
+				text-align: center;
+			}
+			
+			#camera{
+				text-align: center;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Vecty</h1>
+		<!--
+				https://davidwalsh.name/browser-camera
+				Ideally these elements aren't created until it's confirmed that the 
+				client supports video/camera, but for the sake of illustrating the 
+				elements involved, they are created with markup (not JavaScript)
+			-->
+		<!--div id="camera">
+			<div>
+				<video id="video"  width="400" height="300" autoplay></video>
+				<canvas id="canvas" width="200" height="100"></canvas>
+			</div>
+			<div>
+				<button id="snapButton">Take + Vecty</button>
+			<div>
+		</div-->
+			<div id="dropzone">
+				<!--form ref='uploadForm' 
+					id='uploadForm'
+					class='dropzone'
+					action='http://localhost:8000/vectymelo' 
+					method='post' 
+					encType="multipart/form-data">
+						<div class="fallback">
+							<input name="file" type="file" multiple />
+						</div>
+				</form -->
+				<form action="vectymelo" method="post" enctype="multipart/form-data">
+					<input name="srcImg" type="file" multiple />
+					<input type="submit" value="Submit" />
+				</form> 
+			</div>
+			<script>
+				// Grab elements, create settings, etc.
+				var video = document.getElementById('video');
+
+				// Get access to the camera! 
+				// It works only on Chrome 53+
+				if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia ) {
+					navigator.mediaDevices.getUserMedia ({ video: true }).then(function(stream) {
+						video.src = window.URL.createObjectURL(stream);
+						video.play();
+					});
+				}
+				
+				// Elements for taking the snapshot
+				var canvas = document.getElementById('canvas');
+				var context = canvas.getContext('2d');
+				var video = document.getElementById('video');
+
+				// Trigger photo take
+				document.getElementById("snapButton").addEventListener("click", function() {
+
+					context.drawImage(video, 0, 0, 140, 100);
+					
+					var thePic    = canvas.toDataURL("image/png");
+					//var data = new FormData();
+					//data.append("thePic", thePic);
+					var data = JSON.stringify({"thePic": thePic});
+					
+					var request = $.ajax({
+						url: "vectymelo",
+						method: "POST",
+						contentType: "application/json",
+						processData: false,
+						cache: false,
+						data: data
+					});
+					
+					request.done(function( msg ) {
+						alert("Image sent - processing ongoing! check on GH the result https://github.com/f-ds/vecty-data");
+					});
+					
+					request.fail(function( jqXHR, textStatus ) {
+						alert( " Ops, something fucked up :-( error message:'"+ textStatus + "'");
+					});
+				});
+			</script>
+		</div>
+	</body>
 </html>

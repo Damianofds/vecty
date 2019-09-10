@@ -11,38 +11,53 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const VECTY_BASE_WORKING_DIR = "D:\\work\\configurations\\vecty_workingdir";
+const VECTY_BASE_WORKING_DIR = "/tmp";
+
+const VECTY_EXECUTIONS_DIR = VECTY_BASE_WORKING_DIR + "/vecty-workidr";
+
+const VECTY_CERT_DIR = VECTY_BASE_WORKING_DIR + "/certs"
+const VECTY_CERT = VECTY_CERT_DIR + "/hacksparrow-cert.pem";
+const VECTY_CERT_KEY = VECTY_CERT_DIR + "/hacksparrow-key.pem";
+
+const VECTY_SCRIPTS_DIR = ""
+const VECTY_SCRIPTS_POTRACEIT = VECTY_SCRIPTS_DIR + "./potraceit.sh"
+
 
 // setting dependencies
 var express = require('express');
 var router = express.Router();
 var bodyParser = require('body-parser');
-var https = require('https');
+var http = require('http');
 var bunyan = require('bunyan');
 var timestamp = require('unix-timestamp');
 var fileUpload = require('express-fileupload');
-	var fs = require('fs');
+var fs = require('fs');
 	
 // setting middleware functions
 var app = express();
 app.use(express.static('public'));
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser());
 app.use(fileUpload());
 
 app.post('/vectymelo', function (req, res) {
 	
-	if (!req.files) {
+	if (!req.files && !req.body.thePic) {
         res.send('No files were uploaded.');
-        return;
+		console.info("...ERROR, NO FILE SENT !!!");
+		res.status(400).send(err);
     }
+	else{
+		console.info("...at least one file was sent...");
+	}
 	
 	var mkdirp = require('mkdirp');
 	const timestampnow = timestamp.now();
-	var working_dir_path = VECTY_BASE_WORKING_DIR + "/tmp" + timestampnow;
-	console.log("Working dir path: '" + working_dir_path + "'");
-	mkdirp(working_dir_path, function(err){handleInputImg(err, req, working_dir_path, res)});
-	
-	
+	var working_dir_path = VECTY_EXECUTIONS_DIR + "/tmp" + timestampnow;
+	console.log("...working dir path: '" + working_dir_path + "'...");
+	mkdirp(working_dir_path, function(err){
+		handleInputImg(err, req, working_dir_path, res)
+	});
+	return;
 });
 
 function handleInputImg(err, req, working_dir_path, res) {
@@ -50,10 +65,23 @@ function handleInputImg(err, req, working_dir_path, res) {
 		console.error(err);
 	}
 	else{
-		console.log('Potrace working directory created!');
+		console.log('...potrace working directory created!');
 		
-		var srcImg = req.files.srcImg;
-		srcImg.mv(working_dir_path + '/srcImg.jpg', function(err){makeVectorDraw(err, working_dir_path, res)});
+		if (req.files) {
+			var srcImg = req.files.srcImg;
+			srcImg.mv(working_dir_path + '/srcImg.jpg', function(err){makeVectorDraw(err, working_dir_path, res)});
+		}
+		else if(req.body.thePic){
+			
+			console.info("FUCK YEAH");
+			
+			var base64Data = req.body.thePic.replace(/^data:image\/png;base64,/, "");
+			fs.writeFile(working_dir_path + '/srcImg.jpg', base64Data, 'base64', function(err){makeVectorDraw(err, working_dir_path, res)});
+		}
+		else{
+			res.status(400).send(err);
+		}
+		
 	}
 }
 
@@ -62,9 +90,11 @@ function makeVectorDraw(err, working_dir_path, res) {
 		res.status(500).send(err);
 	}
 	else {
-			
+		console.log("...making vector representation...");
 		const exec = require('child_process').execFile;
-		const ls = exec('D:/work/code/vecty/script.bat', [working_dir_path + '/srcImg.jpg', working_dir_path]); //, ['-h', '/usr']
+		var srcImg = working_dir_path + '/srcImg.jpg'
+		console.log("...file to transform is " + srcImg + "...");
+		const ls = exec(VECTY_SCRIPTS_POTRACEIT, [srcImg, working_dir_path]); //, ['-h', '/usr']
 
 		ls.stdout.on('data', (data) => {
 			console.log(`stdout: ${data}`);
@@ -90,10 +120,10 @@ function saveVectorDraw(err, fileToRead, working_dir_path, res){
 	if (!err){
 		fs.readFile(working_dir_path+"/outBase64", {encoding: 'utf-8'}, function(err,data){
 			if (!err){
-				//console.log('received data: ' + data);
+				console.log('received data: ' + "---data");
 				var GitHubApi = require("github");
 				var github = new GitHubApi({
-					//debug: true,
+					debug: false,
 					protocol: "https",
 					host: "api.github.com",
 					headers: {
@@ -103,12 +133,13 @@ function saveVectorDraw(err, fileToRead, working_dir_path, res){
 					followRedirects: false,
 					timeout: 5000
 				});
-				
+				console.log("GitHubApi obj instantiated!");
 				// OAuth2
 				github.authenticate({
 					type: "oauth",
 					token: "5b12ba4d2e35c9e298d544f09e71542a832e8be1"
 				});
+				console.log("Authentication using the GitHubApi obj done!");
 				var timestampnow = working_dir_path.match(/[0-9]{1,10}\.[0-9]{1,10}/);
 				const fileToCommit = "coolness"+timestampnow+".svg";
 				console.log("Going to push '" + fileToCommit + "' the file on github...");
@@ -121,27 +152,44 @@ function saveVectorDraw(err, fileToRead, working_dir_path, res){
 				}, function(err){returnView(err, fileToCommit, res)});
 			}else{
 				console.log(err);
+				res.status(500).send(err);
 			}
 		});
 	}else{
 		console.log(err);
+		res.status(500).send(err);
 	}
 }
 
 
 function returnView(err, fileToCommit, res) {
-	console.log(err, res);
+	//console.log(err, res);
 	if(!err){
-		res.send("---"+res);
 		console.log("...'" + fileToCommit + "' PUSHED!");
+		res.status(500).send(err);
 	}
 	else{
-		console.log("...'" + fileToCommit + "' NOT PUSHED :( A fukkin error happened!");
+		console.log("...'" + fileToCommit + "' NOT PUSHED :( A fukkin error happened! reason is: '" + res + "'");
+		res.status(500).send(err);
 	}
 }
 
 
-var server = app.listen(3000, function() {
+//HTTPS server -> http://www.hacksparrow.com/node-js-https-ssl-certificate.html
+
+//var hscert = fs.readFileSync(VECTY_CERT);
+//var hskey = fs.readFileSync(VECTY_CERT_KEY);
+//
+//var options = {
+//    key: hskey,
+//    cert: hscert
+//};
+
+//http.createServer(app).listen(80);
+//https.createServer(options, app).listen(443);
+
+
+var server = app.listen(8000, function() {
 	var host = server.address().address;
 	var port = server.address().port;
 
