@@ -1,4 +1,4 @@
-### Vecty
+# Vecty
 
 Take a shortcut. Create and modifying drawings from pictures.
 
