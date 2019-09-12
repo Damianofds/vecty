@@ -137,7 +137,7 @@ function saveVectorDraw(err, fileToRead, working_dir_path, res){
 				// OAuth2
 				github.authenticate({
 					type: "oauth",
-					token: "5b12ba4d2e35c9e298d544f09e71542a832e8be1"
+					token: "b14dfe526249f11d3bd94e8d8f933758c1ad1e60"
 				});
 				console.log("Authentication using the GitHubApi obj done!");
 				var timestampnow = working_dir_path.match(/[0-9]{1,10}\.[0-9]{1,10}/);
