@@ -1,14 +1,14 @@
-#Vecty
+###Vecty
 
 Take a shortcut. Create and modifying drawings from pictures.
 
-#Requirements
+###Requirements
 
 ```
 #$ sudo apt-get install npm
 ```
 
-#Build and run
+###Build and run
 
 ```
 #/work/code/vecty$ npm install
@@ -17,7 +17,7 @@ Take a shortcut. Create and modifying drawings from pictures.
 
 In app.js there's hardcoded the github access token for the f-ds account (very secure :)
 
-#Use
+###Use
 Send an image via curl with:
 
 ```
